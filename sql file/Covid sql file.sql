@@ -1,46 +1,65 @@
-Create Database Covid_Project;
-Use Covid_Project;
+-- Create a new database named Covid_Project.
+CREATE DATABASE Covid_Project;
 
+-- Switch to the Covid_Project database for further operations.
+USE Covid_Project;
+
+-- Select all rows from the district_wise_csv table.
 SELECT * FROM district_wise_csv;
 
-SELECT State_Code,SUM(Count) as Population
+-- Select the State_Code and calculate the sum of Count where Status is 'population'.
+-- Group the results by State_Code.
+SELECT State_Code, SUM(Count) AS Population
 FROM district_wise_csv
-WHERE status='population'
+WHERE Status = 'population'
 GROUP BY State_Code;
+
 
 
 
 -- Q1-- Weekly evolution of number of confirmed cases, recovered cases, deaths, tests. For instance, 
 -- your dashboard should be able to compare Week 3 of May with Week 2 of August 
 
-SELECT Year,Month,CASE
-WHEN Day<8 THEN 'Week 1'
-WHEN Day < 15 THEN 'Week 2'
-WHEN Day < 22 THEN 'Week 3'
-ELSE 'Week 4'
-END AS week_of_month,SUM(Tested) as Tested,Sum(Confirmed) as Confirmed,Sum(Recovered) as Recovered,Sum(Death) as Death
-FROM
-(
-SELECT YEAR(DATE) AS Year,MONTHNAME(DATE) as Month,DAY(Date) as Day,
-SUM(CASE WHEN Status='confirmed' THEN Count ELSE '0' END) as Confirmed,
-SUM(CASE WHEN Status='deceased' THEN Count ELSE '0' END) as Death,
-SUM(CASE WHEN Status='tested' THEN Count ELSE '0' END) as Tested,
-SUM(CASE WHEN Status='recovered' THEN Count ELSE '0' END) as Recovered
-FROM State_Wise
-GROUP BY YEAR(DATE),MONTHNAME(DATE),DAY(Date)
-)AS f
-GROUP BY Year,Month,week_of_month;
+-- Select the Year, Month, categorize into weeks, and aggregate data.
+SELECT Year, Month,
+       CASE
+           WHEN Day < 8 THEN 'Week 1'
+           WHEN Day < 15 THEN 'Week 2'
+           WHEN Day < 22 THEN 'Week 3'
+           ELSE 'Week 4'
+       END AS week_of_month,
+       SUM(Tested) AS Tested,
+       SUM(Confirmed) AS Confirmed,
+       SUM(Recovered) AS Recovered,
+       SUM(Death) AS Death
+FROM (
+    -- Subquery to aggregate data by date and status.
+    SELECT YEAR(Date) AS Year,
+           MONTHNAME(Date) AS Month,
+           DAY(Date) AS Day,
+           SUM(CASE WHEN Status = 'confirmed' THEN Count ELSE 0 END) AS Confirmed,
+           SUM(CASE WHEN Status = 'deceased' THEN Count ELSE 0 END) AS Death,
+           SUM(CASE WHEN Status = 'tested' THEN Count ELSE 0 END) AS Tested,
+           SUM(CASE WHEN Status = 'recovered' THEN Count ELSE 0 END) AS Recovered
+    FROM State_Wise
+    GROUP BY YEAR(Date), MONTHNAME(Date), DAY(Date)
+) AS f
+-- Group the results by Year, Month, and the categorized week of the month.
+GROUP BY Year, Month, week_of_month;
 
 
+
+-- Select the State_Code and aggregate data for different statuses.
 SELECT State_Code,
-SUM(CASE WHEN Status='population' THEN Count ELSE '0' END) as Population,
-SUM(CASE WHEN Status='confirmed' THEN Count ELSE '0' END) as Confirmed,
-SUM(CASE WHEN Status='deceased' THEN Count ELSE '0' END) as Deceased,
-SUM(CASE WHEN Status='tested' THEN Count ELSE '0' END) as tested,
-SUM(CASE WHEN Status='vaccinated1' THEN Count ELSE '0' END) as First_Dose,
-SUM(CASE WHEN Status='vaccinated2' THEN Count ELSE '0' END) as Second_Dose
-FROM  district_wise
+       SUM(CASE WHEN Status = 'population' THEN Count ELSE 0 END) AS Population,
+       SUM(CASE WHEN Status = 'confirmed' THEN Count ELSE 0 END) AS Confirmed,
+       SUM(CASE WHEN Status = 'deceased' THEN Count ELSE 0 END) AS Deceased,
+       SUM(CASE WHEN Status = 'tested' THEN Count ELSE 0 END) AS Tested,
+       SUM(CASE WHEN Status = 'vaccinated1' THEN Count ELSE 0 END) AS First_Dose,
+       SUM(CASE WHEN Status = 'vaccinated2' THEN Count ELSE 0 END) AS Second_Dose
+FROM district_wise
 GROUP BY State_Code;
+
 
 -- 1.One Insight-Total Vaccination
 SELECT (SUM(First_Dose)/SUM(Population))*100 as percentage_First_dose,
@@ -48,30 +67,35 @@ SELECT (SUM(First_Dose)/SUM(Population))*100 as percentage_First_dose,
 FROM per_state_analysis;
 
 
-SELECT State_Code,District_Name,
-SUM(CASE WHEN Status='population' THEN Count ELSE '0' END) as Population,
-SUM(CASE WHEN Status='confirmed' THEN Count ELSE '0' END) as Confirmed,
-SUM(CASE WHEN Status='deceased' THEN Count ELSE '0' END) as Deceased,
-SUM(CASE WHEN Status='tested' THEN Count ELSE '0' END) as Tested,
-SUM(CASE WHEN Status='recovered' THEN Count ELSE '0' END) as Recovered,
-SUM(CASE WHEN Status='vaccinated1' THEN Count ELSE '0' END) as First_Dose,
-SUM(CASE WHEN Status='vaccinated2' THEN Count ELSE '0' END) as Second_Dose
-FROM  district_wise
-GROUP BY State_Code,District_Name
-ORDER BY State_Code,District_Name;
+-- Select the State_Code, District_Name, and aggregate data for different statuses.
+SELECT State_Code, District_Name,
+       SUM(CASE WHEN Status = 'population' THEN Count ELSE 0 END) AS Population,
+       SUM(CASE WHEN Status = 'confirmed' THEN Count ELSE 0 END) AS Confirmed,
+       SUM(CASE WHEN Status = 'deceased' THEN Count ELSE 0 END) AS Deceased,
+       SUM(CASE WHEN Status = 'tested' THEN Count ELSE 0 END) AS Tested,
+       SUM(CASE WHEN Status = 'recovered' THEN Count ELSE 0 END) AS Recovered,
+       SUM(CASE WHEN Status = 'vaccinated1' THEN Count ELSE 0 END) AS First_Dose,
+       SUM(CASE WHEN Status = 'vaccinated2' THEN Count ELSE 0 END) AS Second_Dose
+FROM district_wise
+GROUP BY State_Code, District_Name
+-- Order the results by State_Code and District_Name.
+ORDER BY State_Code, District_Name;
 
 
+-- Select the State_Code and aggregate data for different statuses.
 SELECT State_Code,
-SUM(CASE WHEN Status='population' THEN Count ELSE '0' END) as Population,
-SUM(CASE WHEN Status='confirmed' THEN Count ELSE '0' END) as Confirmed,
-SUM(CASE WHEN Status='deceased' THEN Count ELSE '0' END) as Deceased,
-SUM(CASE WHEN Status='tested' THEN Count ELSE '0' END) as Tested,
-SUM(CASE WHEN Status='recovered' THEN Count ELSE '0' END) as Recovered,
-SUM(CASE WHEN Status='vaccinated1' THEN Count ELSE '0' END) as First_Dose,
-SUM(CASE WHEN Status='vaccinated2' THEN Count ELSE '0' END) as Second_Dose
-FROM  district_wise
+       SUM(CASE WHEN Status = 'population' THEN Count ELSE 0 END) AS Population,
+       SUM(CASE WHEN Status = 'confirmed' THEN Count ELSE 0 END) AS Confirmed,
+       SUM(CASE WHEN Status = 'deceased' THEN Count ELSE 0 END) AS Deceased,
+       SUM(CASE WHEN Status = 'tested' THEN Count ELSE 0 END) AS Tested,
+       SUM(CASE WHEN Status = 'recovered' THEN Count ELSE 0 END) AS Recovered,
+       SUM(CASE WHEN Status = 'vaccinated1' THEN Count ELSE 0 END) AS First_Dose,
+       SUM(CASE WHEN Status = 'vaccinated2' THEN Count ELSE 0 END) AS Second_Dose
+FROM district_wise
 GROUP BY State_Code
+-- Order the results by State_Code.
 ORDER BY State_Code;
+;
 
 -- 2.Insight-State with Most number of confirmed case
 WITH CTE AS
@@ -194,23 +218,29 @@ GROUP BY YEAR(DATE),MONTHNAME(DATE)
 ORDER BY Confirmed DESC;
 
 
-SELECT Confirmed,Death,(Confirmed-(Death+Recovered)) as Active_Cases FROM
-(
-SELECT 
-SUM(CASE WHEN Status='confirmed' THEN Count ELSE '0' END) as Confirmed,
-SUM(CASE WHEN Status='deceased' THEN Count ELSE '0' END) as Death,
-SUM(CASE WHEN Status='tested' THEN Count ELSE '0' END) as Tested,
-SUM(CASE WHEN Status='recovered' THEN Count ELSE '0' END) as Recovered
-FROM State_Wise
-)as f;
+-- Select Confirmed, Death, and calculate Active_Cases using subquery aggregation.
+SELECT Confirmed, Death, (Confirmed - (Death + Recovered)) AS Active_Cases
+FROM (
+    -- Subquery to aggregate data for Confirmed, Death, Tested, and Recovered.
+    SELECT 
+        SUM(CASE WHEN Status = 'confirmed' THEN Count ELSE 0 END) AS Confirmed,
+        SUM(CASE WHEN Status = 'deceased' THEN Count ELSE 0 END) AS Death,
+        SUM(CASE WHEN Status = 'tested' THEN Count ELSE 0 END) AS Tested,
+        SUM(CASE WHEN Status = 'recovered' THEN Count ELSE 0 END) AS Recovered
+    FROM State_Wise
+) AS f;
 
-SELECT State_Code as State,Confirmed,Deceased,Recovered as Death 
+-- Select State_Code, Confirmed, Deceased, and Recovered from per_state_analysis.
+-- Filter results for specific states ('Bihar' and 'Kerala').
+SELECT State_Code AS State, Confirmed, Deceased, Recovered AS Death 
 FROM per_state_analysis
-Where State_Code IN ('Bihar','Kerala');
+WHERE State_Code IN ('Bihar', 'Kerala');
 
-UPDATE Per_state_analysis
-SET State_Code='Kerala'
-Where State_Code='KL';
+-- Update State_Code from 'KL' to 'Kerala' in per_state_analysis.
+UPDATE per_state_analysis
+SET State_Code = 'Kerala'
+WHERE State_Code = 'KL';
 
-SELECT * FROM Per_state_analysis
-WHERE State_Code='Kerala';
+-- Select all columns from per_state_analysis where State_Code is 'Kerala'.
+SELECT * FROM per_state_analysis
+WHERE State_Code = 'Kerala';
